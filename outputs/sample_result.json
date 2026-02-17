@@ -1,0 +1,20 @@
+{
+    "match_score": 80,
+    "strengths": [
+        "9+ years of experience in .NET development",
+        "Hands-on experience in Python",
+        "Experience with OpenAI APIs",
+        "Knowledge of Retrieval-Augmented Generation (RAG)",
+        "Developed REST APIs using FastAPI"
+    ],
+    "missing_skills": [
+        "Experience with LLM-powered applications",
+        "Integrate vector databases for semantic search",
+        "Collaborate with cross-functional teams"
+    ],
+    "improvement_suggestions": [
+        "Highlight experience with LLM concepts",
+        "Include collaboration experience",
+        "Detail vector database knowledge"
+    ]
+}
