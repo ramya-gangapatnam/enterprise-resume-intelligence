@@ -115,6 +115,7 @@ def main():
     parser.add_argument("--jd", required=True, help="Path to job description file (.pdf or .docx)")
     parser.add_argument("--out", default="outputs/result.json", help="Output JSON path (default: outputs/result.json)")
     parser.add_argument("--semantic", action="store_true", help="Enable embeddings-based semantic matching")
+    parser.add_argument("--rag", action="store_true", help="Enable RAG knowledge base enhancement")
     args = parser.parse_args()
 
     resume_text = extract_text(args.resume)
@@ -159,7 +160,7 @@ def main():
 
     # Validate with Pydantic
     data = json.loads(response.output_text)
-    validated = ResumeEvaluation(**data)
+    validated = ResumeEvaluation(**data)    
 
         # Start with base output
     output = validated.model_dump()
@@ -179,6 +180,70 @@ def main():
         output["jd_skills_extracted"] = skills["jd_skills"]
 
         print("\n[bold magenta]Semantic Matching Enabled[/bold magenta]")
+
+        # Optional: RAG knowledge base enhancement (Phase 3)
+    if args.rag:
+        from rag_engine import load_knowledge_base, retrieve_relevant_chunks
+
+        kb = load_knowledge_base("knowledge_base/ai_skills.txt")
+        rag_query = " ".join(validated.missing_skills) or "resume improvement suggestions"
+        retrieved = retrieve_relevant_chunks(rag_query, kb, top_k=3)
+
+        # Store what was retrieved (so Phase 3 is visible in output)
+        output["rag_enabled"] = True
+        output["rag_query"] = rag_query
+        output["rag_top_chunks"] = retrieved
+                # ---- RAG Generation step: refine suggestions using retrieved context ----
+        refine_prompt = f"""
+You are improving resume suggestions using ONLY the retrieved knowledge context.
+
+Missing skills:
+{validated.missing_skills}
+
+Current suggestions:
+{validated.improvement_suggestions}
+
+Retrieved knowledge context:
+{chr(10).join(retrieved)}
+
+Rules:
+- Make suggestions specific and actionable (max 5 bullets).
+- Do NOT invent experience. Suggest what to learn/build/highlight.
+- Keep each suggestion under 14 words.
+- Return strict JSON.
+
+Return JSON with:
+- refined_suggestions (list of strings)
+""".strip()
+
+        refine_response = client.responses.create(
+            model="gpt-4o-mini",
+            input=refine_prompt,
+            temperature=0.2,
+            text={
+                "format": {
+                    "type": "json_schema",
+                    "name": "rag_refine",
+                    "strict": True,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "refined_suggestions": {
+                                "type": "array",
+                                "items": {"type": "string"}
+                            }
+                        },
+                        "required": ["refined_suggestions"],
+                        "additionalProperties": False
+                    }
+                }
+            }
+        )
+
+        output["rag_refined_suggestions"] = json.loads(refine_response.output_text)["refined_suggestions"]
+        print("\n[bold cyan]RAG Enabled[/bold cyan]")
+    else:
+        output["rag_enabled"] = False
 
     # Save ONE final output (no overwrite)
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)

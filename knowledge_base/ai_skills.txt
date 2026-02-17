@@ -1,0 +1,14 @@
+Vector Databases:
+Vector databases store embeddings for semantic search and retrieval. Examples include Pinecone, Weaviate, and ChromaDB.
+
+LLMOps:
+LLMOps involves monitoring, deployment, cost optimization, guardrails, and evaluation of LLM systems in production.
+
+Prompt Engineering:
+Designing structured prompts to reduce hallucinations and improve consistency.
+
+RAG (Retrieval-Augmented Generation):
+A system where relevant documents are retrieved before generating an answer to improve factual grounding.
+
+Production AI Deployment:
+Includes containerization, monitoring, logging, scaling, and latency optimization.
