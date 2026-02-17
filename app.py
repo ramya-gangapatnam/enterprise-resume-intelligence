@@ -167,7 +167,7 @@ def main():
 
     # Optional: semantic matching
     if args.semantic:
-        from semantic_match import semantic_skill_match
+        from app.semantic_match import semantic_skill_match
 
         skills = extract_skills(resume_text, jd_text)
         sem = semantic_skill_match(
@@ -183,7 +183,7 @@ def main():
 
         # Optional: RAG knowledge base enhancement (Phase 3)
     if args.rag:
-        from rag_engine import load_knowledge_base, retrieve_relevant_chunks
+        from app.rag_engine import load_knowledge_base, retrieve_relevant_chunks
 
         kb = load_knowledge_base("knowledge_base/ai_skills.txt")
         rag_query = " ".join(validated.missing_skills) or "resume improvement suggestions"
