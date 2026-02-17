@@ -124,6 +124,9 @@ Saved to outputs/result.json
 5️⃣ Run Phase 2 (Semantic Matching Enabled)
 python app.py --resume data/resume.pdf --jd data/job_description.pdf --semantic
 
+How to Run Phase 3
+python app.py --resume data/resume.pdf --jd data/job_description.pdf --semantic --rag
+
 This adds:
 -semantic_matches
 -resume_skills_extracted
@@ -144,5 +147,9 @@ Example Output Structure:
       "similarity": 1.0,
       "status": "matched"
     }
-  ]
+  ],  
+  "rag_enabled": true,
+  "rag_query": "...",
+  "rag_top_chunks": [...],
+  "rag_refined_suggestions": [...]
 }
