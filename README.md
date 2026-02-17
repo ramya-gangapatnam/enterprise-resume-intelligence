@@ -66,7 +66,7 @@ data/resume.pdf (or .docx)
 data/job_description.pdf (or .docx)
 
 4) Run
-python app.py
+python app.py --resume data/resume.pdf --jd data/job_description.pdf
 
 Outputs:
 Console: JSON + token usage
