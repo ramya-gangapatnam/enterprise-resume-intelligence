@@ -28,6 +28,46 @@ def extract_text(file_path: str) -> str:
 
     raise ValueError("Unsupported file format. Use .pdf or .docx")
 
+def extract_skills(resume_text: str, jd_text: str) -> dict:
+    skill_prompt = f"""
+Extract skills from the Resume and Job Description.
+
+RULES:
+- Return ONLY skills explicitly present in each text.
+- Keep skills short phrases (1-4 words).
+- Exclude job titles or role names (e.g., "AI Engineer", "Software Engineer").
+- No duplicates.
+- Do not infer.
+
+Resume:
+{resume_text}
+
+Job Description:
+{jd_text}
+""".strip()
+
+    skill_response = client.responses.create(
+        model="gpt-4o-mini",
+        input=skill_prompt,
+        temperature=0,
+        text={
+            "format": {
+                "type": "json_schema",
+                "name": "skills_extract",
+                "strict": True,
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "resume_skills": {"type": "array", "items": {"type": "string"}},
+                        "jd_skills": {"type": "array", "items": {"type": "string"}}
+                    },
+                    "required": ["resume_skills", "jd_skills"],
+                    "additionalProperties": False
+                }
+            }
+        }
+    )
+    return json.loads(skill_response.output_text)
 
 # ---------------------------
 # Pydantic Schema
@@ -74,6 +114,7 @@ def main():
     parser.add_argument("--resume", required=True, help="Path to resume file (.pdf or .docx)")
     parser.add_argument("--jd", required=True, help="Path to job description file (.pdf or .docx)")
     parser.add_argument("--out", default="outputs/result.json", help="Output JSON path (default: outputs/result.json)")
+    parser.add_argument("--semantic", action="store_true", help="Enable embeddings-based semantic matching")
     args = parser.parse_args()
 
     resume_text = extract_text(args.resume)
@@ -120,10 +161,29 @@ def main():
     data = json.loads(response.output_text)
     validated = ResumeEvaluation(**data)
 
-    # Save output
+        # Start with base output
+    output = validated.model_dump()
+
+    # Optional: semantic matching
+    if args.semantic:
+        from semantic_match import semantic_skill_match
+
+        skills = extract_skills(resume_text, jd_text)
+        sem = semantic_skill_match(
+            jd_skills=skills["jd_skills"],
+            resume_skills=skills["resume_skills"]
+        )
+
+        output["semantic_matches"] = sem
+        output["resume_skills_extracted"] = skills["resume_skills"]
+        output["jd_skills_extracted"] = skills["jd_skills"]
+
+        print("\n[bold magenta]Semantic Matching Enabled[/bold magenta]")
+
+    # Save ONE final output (no overwrite)
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as f:
-        json.dump(validated.model_dump(), f, indent=4)
+        json.dump(output, f, indent=4)
 
     print(f"\n[bold green]Saved to {args.out}[/bold green]")
 

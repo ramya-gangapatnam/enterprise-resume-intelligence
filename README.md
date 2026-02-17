@@ -1,84 +1,148 @@
-# Enterprise Resume Intelligence (LLM-Powered Resume vs JD Evaluator)
-
-A lightweight, production-style resume evaluation tool that compares a **Resume** against a **Job Description** and returns a **strict JSON report** with:
-
-- Match score (0–100)
-- Strengths (from resume text)
-- Missing skills (from job description not found in resume)
-- Improvement suggestions
-
-This project focuses on **structured outputs, validation, and cost awareness** (token usage) — the practical foundations of Applied AI Engineering.
+# Enterprise Resume Intelligence
+LLM-Powered Resume vs Job Description Evaluation System
 
 ---
 
-## What it does
+## Overview
 
-1. Reads **Resume** and **Job Description** from **PDF or DOCX**
-2. Extracts text reliably
-3. Sends both to an LLM (OpenAI API)
-4. Enforces **strict JSON schema output**
-5. Validates the output with **Pydantic**
-6. Saves results to `outputs/result.json`
-7. Prints token usage for cost monitoring
+Enterprise Resume Intelligence is a production-style Applied AI system that evaluates how well a Resume matches a Job Description.
+
+The system returns:
+
+- Match Score (0–100)
+- Strengths
+- Missing Skills
+- Improvement Suggestions
+- (Optional) Semantic Skill Matching using Embeddings
+
+This project demonstrates structured LLM integration, guardrails, and semantic matching — built with production mindset.
 
 ---
 
-## Tech Stack
+## Why This Project?
+
+Recruiters and hiring teams often manually evaluate resumes against job descriptions. This system automates that evaluation using:
+
+- LLM-based structured scoring
+- Guardrails for reliability
+- Embeddings for semantic skill matching
+- Token logging for cost awareness
+
+The goal is not just generation — but controlled, validated AI output.
+
+---
+
+# Architecture Overview
+
+The system follows layered AI system design:
+
+### 1️⃣ Input Layer
+- PDF/DOCX ingestion
+- Resume and JD text extraction
+- Input validation
+
+### 2️⃣ Reasoning Layer (LLM)
+- Low-temperature evaluation for consistency
+- Strict JSON schema enforcement
+- No inference beyond explicit text
+
+### 3️⃣ Guardrail Layer
+- Pydantic validation
+- Score constrained to 0–100
+- Deterministic output structure
+
+### 4️⃣ Semantic Matching Layer (Phase 2)
+- Skill extraction via structured output
+- Embedding generation
+- Cosine similarity calculation
+- Matched / Partial / Missing classification
+
+### 5️⃣ Monitoring Layer
+- Token usage logging
+- Output persistence
+
+---
+
+# Tech Stack
 
 - Python
 - OpenAI Responses API
-- Pydantic (validation + guardrails)
-- PyPDF (PDF parsing)
-- python-docx (DOCX parsing)
-- dotenv (.env secrets)
-- rich (clean terminal output)
+- OpenAI Embeddings API
+- Pydantic (Validation & Guardrails)
+- PyPDF (PDF Parsing)
+- python-docx (DOCX Parsing)
+- argparse (CLI Interface)
+- rich (Console Output)
 
 ---
 
-## Project Structure
-
-```txt
+# Project Structure
 enterprise-resume-intelligence/
-  app.py
-  README.md
-  requirements.txt
-  .env
-  data/
-    resume.pdf
-    job_description.pdf
-  outputs/
-    result.json              # ignored (changes every run)
-    sample_result.json       # committed example output
+│
+├── app.py
+├── semantic_match.py
+├── README.md
+├── requirements.txt
+├── .env # Not committed
+│
+├── data/ # Ignored in Git
+│ ├── resume.pdf
+│ └── job_description.pdf
+│
+└── outputs/
+├── result.json
+└── sample_result.json
 
-How to Run
-1) Setup
+
+---
+
+# How to Run
+
+1️⃣ Setup Virtual Environment
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
 
-2) Add your API key
-Create .env:
+2️⃣ Add Your API Key
+Create a .env file:
 OPENAI_API_KEY=your_key_here
 
-3) Add input files
-Place your files here:
-data/resume.pdf (or .docx)
-data/job_description.pdf (or .docx)
+3️⃣ Add Input Files
+Place your resume and job description inside:
+data/
+Example:
+data/resume.pdf
+data/job_description.pdf
 
-4) Run
+4️⃣ Run Phase 1 (Structured Evaluation)
 python app.py --resume data/resume.pdf --jd data/job_description.pdf
 
-Outputs:
-Console: JSON + token usage
-File: outputs/result.json
+Output:
+Structured JSON printed to console
+Saved to outputs/result.json
 
-Example Output
-See: outputs/sample_result.json
-Example format:
+5️⃣ Run Phase 2 (Semantic Matching Enabled)
+python app.py --resume data/resume.pdf --jd data/job_description.pdf --semantic
 
+This adds:
+-semantic_matches
+-resume_skills_extracted
+-jd_skills_extracted
+
+to the final output.
+
+Example Output Structure:
 {
   "match_score": 80,
-  "strengths": ["..."],
-  "missing_skills": ["..."],
-  "improvement_suggestions": ["..."]
+  "strengths": [...],
+  "missing_skills": [...],
+  "improvement_suggestions": [...],
+  "semantic_matches": [
+    {
+      "jd_skill": "Python",
+      "best_resume_skill": "Python",
+      "similarity": 1.0,
+      "status": "matched"
+    }
+  ]
 }
